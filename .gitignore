@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+.next/
+out/
+dist/
+build/
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# Environment variables — NEVER commit these
+.env
+.env.local
+.env.production
+.env.development
+
+# Database
+*.db
+*.sqlite
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# Vercel
+.vercel/
+
+# Testing
+coverage/
+.pytest_cache/
+htmlcov/
+
+# Build artifacts
+*.egg-info/
+dist/
