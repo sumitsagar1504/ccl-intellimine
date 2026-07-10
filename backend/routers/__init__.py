@@ -1,0 +1,1 @@
+# IntelliMine Copilot — Backend Package
