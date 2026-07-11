@@ -617,3 +617,101 @@ select.input { cursor: pointer; }
 
 /* Sidebar active glow — alias for backward compat */
 .sidebar-active { /* handled by nav-item-active */ }
+
+/* ═══════════════════════════════════════════════════
+   MOBILE RESPONSIVENESS
+═══════════════════════════════════════════════════ */
+
+/* Minimum touch target size (WCAG 2.5.5) */
+@media (max-width: 768px) {
+  .nav-item {
+    min-height: 44px;
+    padding: 10px 12px;
+  }
+
+  /* KPI cards — tighter on mobile */
+  .kpi-card {
+    padding: 12px;
+  }
+
+  /* Glass cards — tighter padding */
+  .glass-card {
+    padding: 16px;
+  }
+
+  /* Prevent chart overflow on small screens */
+  .recharts-responsive-container {
+    min-width: 0 !important;
+  }
+
+  /* Tables — horizontal scroll */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Copilot input bigger tap target */
+  .chat-input {
+    font-size: 16px !important; /* Prevents iOS zoom-on-focus */
+  }
+
+  /* Tooltip hidden on mobile (no hover) */
+  .tooltip-content {
+    display: none !important;
+  }
+}
+
+/* Safe-area insets for notched phones */
+@supports (padding: env(safe-area-inset-bottom)) {
+  main {
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  header {
+    padding-top: max(0px, env(safe-area-inset-top));
+  }
+}
+
+/* Smooth momentum scrolling on iOS */
+.overflow-y-auto, main {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent text size adjustment on orientation change */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Better tap highlights */
+a, button {
+  -webkit-tap-highlight-color: rgba(59, 130, 246, 0.15);
+}
+
+/* Responsive grid helper — 1 col on mobile, 2 on sm, N on lg */
+.responsive-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+@media (min-width: 640px) {
+  .responsive-grid-2 { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+}
+
+.responsive-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+@media (min-width: 768px) {
+  .responsive-grid-4 { grid-template-columns: repeat(4, 1fr); gap: 16px; }
+}
+
+/* Overflow scroll wrapper for data-heavy sections */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius-md);
+}

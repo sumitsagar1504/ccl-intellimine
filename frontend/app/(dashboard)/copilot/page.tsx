@@ -294,18 +294,18 @@ I'm your AI assistant for Central Coalfields Limited operations. I have real-tim
       {/* Input */}
       <div className="shrink-0 pt-3">
         <form onSubmit={e => { e.preventDefault(); send(input); }}
-          className="flex gap-3 p-3 rounded-2xl"
+          className="flex gap-2 p-3 rounded-2xl"
           style={{ background: 'rgba(13,26,53,0.8)', border: '1px solid var(--color-border)' }}>
           <input
             value={input}
             onChange={e => setInput(e.target.value)}
-            placeholder="Ask about production, equipment, safety, employees..."
-            className="flex-1 bg-transparent text-sm outline-none"
-            style={{ color: 'var(--color-text-primary)' }}
+            placeholder="Ask about production, equipment, safety..."
+            className="flex-1 bg-transparent outline-none chat-input"
+            style={{ color: 'var(--color-text-primary)', fontSize: 16, lineHeight: 1.4 }}
             disabled={loading}
           />
           <button type="submit" disabled={!input.trim() || loading}
-            className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-110 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
             style={{ background: 'linear-gradient(135deg, #1e40af, #7c3aed)' }}>
             <Send size={16} style={{ color: '#fff' }} />
           </button>
