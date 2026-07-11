@@ -91,11 +91,18 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ response: text, model: modelName });
       } catch (e: any) {
         lastError = e;
-        // If it's a 404/model-not-found error, try next model
-        if (e?.message?.includes('404') || e?.message?.includes('not found') || e?.status === 404) {
+        const eMsg = e?.message ?? '';
+        // 429 rate limit — return friendly message immediately, no point retrying other models
+        if (eMsg.includes('429') || eMsg.includes('quota') || eMsg.includes('QUOTA') || eMsg.includes('Too Many Requests')) {
+          return NextResponse.json({
+            response: '⏳ **Rate limit reached** — Free Gemini quota hit for this minute.\n\nWait 60 seconds and try again. The free tier allows **15 requests/minute**.',
+          });
+        }
+        // 404/model-not-found — try next model in list
+        if (eMsg.includes('404') || eMsg.includes('not found') || e?.status === 404) {
           continue;
         }
-        // Any other error (auth, quota, etc.) — throw immediately
+        // Any other error — throw immediately to outer catch
         throw e;
       }
     }

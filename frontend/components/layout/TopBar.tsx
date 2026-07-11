@@ -5,7 +5,7 @@ import { notificationSummary } from '@/lib/mock/notifications';
 import { Bell, Search, Zap, Command, X } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState, useRef } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard':     'Executive Dashboard',
@@ -19,22 +19,32 @@ const PAGE_TITLES: Record<string, string> = {
   '/safety':        'Safety Management',
 };
 
+// Each shortcut navigates to the AI Copilot with the query pre-filled
 const SEARCH_SHORTCUTS = [
-  'Rajrappa mine production',
-  'Dumper 203 health',
-  'Safety incidents July',
-  'Employee training due',
-  'Piparwar efficiency',
+  { label: 'Rajrappa mine production',       icon: '⛏️' },
+  { label: 'Dumper 203 health status',        icon: '🔧' },
+  { label: 'Safety incidents this month',     icon: '🦺' },
+  { label: 'Employees with training overdue', icon: '👥' },
+  { label: 'Piparwar mine efficiency',        icon: '📊' },
+  { label: 'Equipment breakdown list',        icon: '⚙️' },
 ];
 
 export default function TopBar() {
   const { user } = useAuth();
   const pathname = usePathname();
+  const router   = useRouter();
   const [time, setTime] = useState(new Date());
   const [search, setSearch] = useState('');
   const [focused, setFocused] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
+
+  const navigateToQuery = (query: string) => {
+    if (!query.trim()) return;
+    setShowDropdown(false);
+    setSearch('');
+    router.push(`/copilot?q=${encodeURIComponent(query.trim())}`);
+  };
 
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 1000);
@@ -100,7 +110,8 @@ export default function TopBar() {
             onChange={e => { setSearch(e.target.value); setShowDropdown(true); }}
             onFocus={() => { setFocused(true); setShowDropdown(true); }}
             onBlur={() => { setTimeout(() => { setFocused(false); setShowDropdown(false); }, 150); }}
-            placeholder="Search mines, equipment, employees..."
+            onKeyDown={e => { if (e.key === 'Enter' && search.trim()) navigateToQuery(search); }}
+            placeholder="Search or ask AI... (Enter to ask)"
             className="flex-1 bg-transparent text-[13px] outline-none"
             style={{ color: 'var(--text-primary)' }}
           />
@@ -125,14 +136,18 @@ export default function TopBar() {
                 {search ? 'Results' : 'Suggested'}
               </p>
             </div>
-            {SEARCH_SHORTCUTS.filter(s => !search || s.toLowerCase().includes(search.toLowerCase())).map(s => (
-              <button key={s} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-[13px] transition-colors hover:bg-white/5"
-                style={{ color: 'var(--text-secondary)' }}
-                onMouseDown={() => { setSearch(s); setShowDropdown(false); }}>
-                <Search size={12} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-                {s}
-              </button>
-            ))}
+            {SEARCH_SHORTCUTS
+              .filter(s => !search || s.label.toLowerCase().includes(search.toLowerCase()))
+              .map(s => (
+                <button key={s.label}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-[13px] transition-colors hover:bg-white/5"
+                  style={{ color: 'var(--text-secondary)' }}
+                  onMouseDown={() => navigateToQuery(s.label)}>
+                  <span className="text-sm flex-shrink-0">{s.icon}</span>
+                  <span className="flex-1">{s.label}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background:'rgba(99,102,241,0.12)', color:'#818cf8' }}>Ask AI →</span>
+                </button>
+              ))}
             <div className="px-3 py-2 border-t" style={{ borderColor: 'var(--border)' }}>
               <Link href="/copilot"
                 className="flex items-center gap-2 text-[11px] font-semibold"

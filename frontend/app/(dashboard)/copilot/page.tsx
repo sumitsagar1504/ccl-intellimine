@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
@@ -169,6 +170,7 @@ function TypingIndicator() {
 }
 
 export default function CopilotPage() {
+  const searchParams = useSearchParams();
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
@@ -192,12 +194,13 @@ I'm your AI assistant for Central Coalfields Limited operations. I have real-tim
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const autoSentRef = useRef(false);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  const send = async (text: string) => {
+  const send = useCallback(async (text: string) => {
     if (!text.trim() || loading) return;
     const userMsg: Message = { role: 'user', content: text, timestamp: new Date() };
     setMessages(prev => [...prev, userMsg]);
@@ -225,7 +228,18 @@ I'm your AI assistant for Central Coalfields Limited operations. I have real-tim
     } finally {
       setLoading(false);
     }
-  };
+  }, [messages, loading]);
+
+  // Auto-send query from URL ?q= param (comes from search bar)
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q && !autoSentRef.current) {
+      autoSentRef.current = true;
+      // Small delay so the page renders first
+      const timer = setTimeout(() => send(q), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, send]);
 
   return (
     <div className="h-full flex flex-col fade-in" style={{ maxHeight: 'calc(100vh - 120px)' }}>
