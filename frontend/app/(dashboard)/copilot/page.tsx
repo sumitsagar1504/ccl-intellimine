@@ -7,7 +7,7 @@ import {
   BarChart, Bar, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell,
   XAxis, YAxis, Tooltip, ResponsiveContainer
 } from 'recharts';
-import { Send, Zap, RefreshCw, Sparkles } from 'lucide-react';
+import { Send, Zap, RefreshCw, Sparkles, Bot, Copy, Check } from 'lucide-react';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -85,8 +85,8 @@ function InlineChart({ data }: { data: { type: string; title: string; data: any[
   return (
     <div className="mt-3 rounded-xl overflow-hidden" style={{ background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.15)' }}>
       <div className="px-4 py-2 border-b flex items-center gap-2" style={{ borderColor: 'rgba(59,130,246,0.15)' }}>
-        <Sparkles size={13} style={{ color: 'var(--color-blue)' }} />
-        <span className="text-xs font-semibold" style={{ color: 'var(--color-blue-bright)' }}>{title}</span>
+        <Sparkles size={13} style={{ color: 'var(--blue)' }} />
+        <span className="text-xs font-semibold" style={{ color: 'var(--blue-light)' }}>{title}</span>
       </div>
       <div className="p-4">
         <ResponsiveContainer width="100%" height={220}>{renderChart()!}</ResponsiveContainer>
@@ -122,22 +122,23 @@ function MessageBubble({ msg }: { msg: Message }) {
           <p className="text-sm text-white">{text}</p>
         ) : (
           <>
-            <div className="text-sm prose-custom" style={{ color: 'var(--color-text-primary)' }}>
+            <div className="text-sm prose-custom" style={{ color: 'var(--text-primary)' }}>
               <ReactMarkdown remarkPlugins={[remarkGfm]}
                 components={{
-                  p: ({ children }) => <p className="mb-2 last:mb-0 leading-relaxed text-sm" style={{ color: 'var(--color-text-primary)' }}>{children}</p>,
-                  strong: ({ children }) => <strong className="font-semibold" style={{ color: 'var(--color-blue-bright)' }}>{children}</strong>,
+                  p: ({ children }) => <p className="mb-2 last:mb-0 leading-relaxed text-sm" style={{ color: 'var(--text-primary)' }}>{children}</p>,
+                  strong: ({ children }) => <strong className="font-semibold" style={{ color: 'var(--blue-light)' }}>{children}</strong>,
                   ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>,
                   ol: ({ children }) => <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>,
-                  li: ({ children }) => <li className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{children}</li>,
+                  li: ({ children }) => <li className="text-sm" style={{ color: 'var(--text-secondary)' }}>{children}</li>,
                   table: ({ children }) => <div className="overflow-x-auto my-2"><table className="data-table w-full text-xs rounded-lg overflow-hidden">{children}</table></div>,
-                  th: ({ children }) => <th className="text-left" style={{ color: 'var(--color-text-secondary)', background: 'rgba(59,130,246,0.1)', padding: '8px 12px', borderBottom: '1px solid rgba(59,130,246,0.2)', fontWeight: 600, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{children}</th>,
-                  td: ({ children }) => <td style={{ padding: '8px 12px', borderBottom: '1px solid rgba(59,130,246,0.08)', color: 'var(--color-text-primary)' }}>{children}</td>,
-                  code: ({ children }) => <code className="font-mono text-xs px-1.5 py-0.5 rounded" style={{ background: 'rgba(59,130,246,0.1)', color: '#93c5fd' }}>{children}</code>,
-                  h1: ({ children }) => <h1 className="text-base font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>{children}</h1>,
-                  h2: ({ children }) => <h2 className="text-sm font-bold mb-1" style={{ color: 'var(--color-blue-bright)' }}>{children}</h2>,
-                  h3: ({ children }) => <h3 className="text-sm font-semibold mb-1" style={{ color: 'var(--color-text-secondary)' }}>{children}</h3>,
-                  blockquote: ({ children }) => <blockquote className="border-l-2 pl-3 my-2 italic" style={{ borderColor: 'var(--color-blue)', color: 'var(--color-text-secondary)' }}>{children}</blockquote>,
+                  th: ({ children }) => <th className="text-left" style={{ color: 'var(--text-secondary)', background: 'rgba(59,130,246,0.1)', padding: '8px 12px', borderBottom: '1px solid rgba(59,130,246,0.2)', fontWeight: 600, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{children}</th>,
+                  td: ({ children }) => <td style={{ padding: '8px 12px', borderBottom: '1px solid rgba(59,130,246,0.08)', color: 'var(--text-primary)' }}>{children}</td>,
+                  code: ({ children, ...props }: React.HTMLAttributes<HTMLElement> & { children?: React.ReactNode }) => <code className="font-mono text-xs px-1.5 py-0.5 rounded" style={{ background: 'rgba(59,130,246,0.1)', color: '#93c5fd' }}>{children}</code>,
+                  h1: ({ children }) => <h1 className="text-base font-bold mb-2" style={{ color: 'var(--text-primary)' }}>{children}</h1>,
+                  h2: ({ children }) => <h2 className="text-sm font-bold mb-1" style={{ color: 'var(--blue-light)' }}>{children}</h2>,
+                  h3: ({ children }) => <h3 className="text-sm font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>{children}</h3>,
+                  blockquote: ({ children }) => <blockquote className="border-l-2 pl-3 my-2 italic" style={{ borderColor: 'var(--blue)', color: 'var(--text-secondary)' }}>{children}</blockquote>,
+                  a: ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: 'var(--blue-light)' }}>{children}</a>,
                 }}>
                 {text}
               </ReactMarkdown>
@@ -160,7 +161,7 @@ function TypingIndicator() {
         style={{ background: 'linear-gradient(135deg, #1e40af, #7c3aed)' }}>🤖</div>
       <div className="chat-ai px-4 py-3 flex items-center gap-1">
         {[0, 1, 2].map(i => (
-          <div key={i} className="w-2 h-2 rounded-full" style={{ background: 'var(--color-blue)', animation: `bounce 1.4s ${i * 0.2}s infinite` }} />
+          <div key={i} className="w-2 h-2 rounded-full" style={{ background: 'var(--blue)', animation: `bounce 1.4s ${i * 0.2}s infinite` }} />
         ))}
       </div>
     </div>
