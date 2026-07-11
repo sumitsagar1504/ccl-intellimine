@@ -62,10 +62,15 @@ export async function POST(req: NextRequest) {
 
     const genAI = new GoogleGenerativeAI(apiKey);
 
-    const history = messages.slice(0, -1).map((m: { role: string; content: string }) => ({
+    // Build history — Gemini requires it starts with 'user' and alternates roles.
+    // Drop any leading model messages to avoid "First content should be with role 'user'" error.
+    const rawHistory = messages.slice(0, -1).map((m: { role: string; content: string }) => ({
       role: m.role === 'user' ? 'user' : 'model',
       parts: [{ text: m.content }],
     }));
+    // Find the first user message index and slice from there
+    const firstUserIdx = rawHistory.findIndex((m: { role: string }) => m.role === 'user');
+    const history = firstUserIdx >= 0 ? rawHistory.slice(firstUserIdx) : [];
 
     const lastMessage = messages[messages.length - 1].content;
 
