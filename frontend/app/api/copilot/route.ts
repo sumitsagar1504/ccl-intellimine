@@ -78,10 +78,12 @@ export async function POST(req: NextRequest) {
     let lastError: Error | null = null;
     for (const modelName of MODEL_CANDIDATES) {
       try {
-        const model = genAI.getGenerativeModel({ model: modelName });
+        const model = genAI.getGenerativeModel({
+          model: modelName,
+          systemInstruction: SYSTEM_PROMPT,
+        });
         const chat = model.startChat({
           history,
-          systemInstruction: SYSTEM_PROMPT,
           generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
         });
         const result = await chat.sendMessage(lastMessage);
