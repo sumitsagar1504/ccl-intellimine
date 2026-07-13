@@ -3,6 +3,7 @@ from routers.auth import get_current_user, TokenData
 from typing import Optional
 import os
 import google.generativeai as genai
+from google.api_core.exceptions import ResourceExhausted, GoogleAPICallError
 
 router = APIRouter()
 
@@ -23,20 +24,37 @@ async def chat(
     if not api_key:
         return {"response": "AI Copilot requires GEMINI_API_KEY environment variable."}
 
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-2.0-flash-exp")
+    if not messages:
+        return {"response": "No message provided."}
 
-    # Build chat history
-    history = []
-    for msg in messages[:-1]:
-        history.append({
-            "role": "user" if msg["role"] == "user" else "model",
-            "parts": [msg["content"]],
-        })
+    try:
+        genai.configure(api_key=api_key)
+        # gemini-1.5-flash has higher free-tier limits (15 RPM → same, but more stable)
+        model = genai.GenerativeModel("gemini-1.5-flash")
 
-    chat = model.start_chat(history=history)
-    result = chat.send_message(messages[-1]["content"])
-    return {"response": result.text}
+        # Build chat history
+        history = []
+        for msg in messages[:-1]:
+            history.append({
+                "role": "user" if msg["role"] == "user" else "model",
+                "parts": [msg["content"]],
+            })
+
+        chat_session = model.start_chat(history=history)
+        result = chat_session.send_message(messages[-1]["content"])
+        return {"response": result.text}
+
+    except ResourceExhausted:
+        return {
+            "response": (
+                "⏳ **Rate limit reached** — Free Gemini quota hit for this minute. "
+                "Wait 60 seconds and try again. The free tier allows 15 requests/minute."
+            )
+        }
+    except GoogleAPICallError as e:
+        return {"response": f"⚠️ Gemini API error: {str(e)}. Please try again."}
+    except Exception as e:
+        return {"response": f"⚠️ Unexpected error: {str(e)}. Please try again."}
 
 
 @router.get("/suggested-prompts")
