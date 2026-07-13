@@ -39,14 +39,16 @@ ${ragContext.map(d => `### ${d.title}\n${d.content.slice(0, 500)}`).join('\n\n--
 
 Always be specific, data-driven, and professional. Use Indian number formatting (lakhs, crores). Reference specific mine names, equipment IDs, and employee details when relevant.`;
 
-// Ordered list of models to try (newest first, fallbacks after)
-const MODEL_CANDIDATES = [
-  'gemini-2.0-flash',
-  'gemini-2.0-flash-exp',
-  'gemini-1.5-flash',
-  'gemini-1.5-flash-latest',
-  'gemini-pro',
-];
+// Single stable model — gemini-1.5-flash has the best free tier (15 RPM, 1500 RPD)
+const MODEL = 'gemini-1.5-flash';
+
+// Simple in-memory cache to avoid re-calling API for same/similar queries (5 min TTL)
+const responseCache = new Map<string, { response: string; ts: number }>();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function getCacheKey(messages: { role: string; content: string }[]): string {
+  return messages.map(m => `${m.role}:${m.content}`).join('|').toLowerCase().trim();
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -60,55 +62,51 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ response: getDemoResponse(lastQuery) });
     }
 
+    // Check cache first — avoid hitting API for duplicate queries
+    const cacheKey = getCacheKey(messages);
+    const cached = responseCache.get(cacheKey);
+    if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
+      return NextResponse.json({ response: cached.response, cached: true });
+    }
+
     const genAI = new GoogleGenerativeAI(apiKey);
 
     // Build history — Gemini requires it starts with 'user' and alternates roles.
-    // Drop any leading model messages to avoid "First content should be with role 'user'" error.
     const rawHistory = messages.slice(0, -1).map((m: { role: string; content: string }) => ({
       role: m.role === 'user' ? 'user' : 'model',
       parts: [{ text: m.content }],
     }));
-    // Find the first user message index and slice from there
     const firstUserIdx = rawHistory.findIndex((m: { role: string }) => m.role === 'user');
     const history = firstUserIdx >= 0 ? rawHistory.slice(firstUserIdx) : [];
-
     const lastMessage = messages[messages.length - 1].content;
 
-    // Try each model until one works
-    let lastError: Error | null = null;
-    for (const modelName of MODEL_CANDIDATES) {
-      try {
-        const model = genAI.getGenerativeModel({
-          model: modelName,
-          systemInstruction: SYSTEM_PROMPT,
+    try {
+      const model = genAI.getGenerativeModel({
+        model: MODEL,
+        systemInstruction: SYSTEM_PROMPT,
+      });
+      const chat = model.startChat({
+        history,
+        generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
+      });
+      const result = await chat.sendMessage(lastMessage);
+      const text = result.response.text();
+
+      // Cache the successful response
+      responseCache.set(cacheKey, { response: text, ts: Date.now() });
+
+      return NextResponse.json({ response: text, model: MODEL });
+    } catch (e: any) {
+      const eMsg = e?.message ?? '';
+      // 429 rate limit — return friendly message immediately
+      if (eMsg.includes('429') || eMsg.includes('quota') || eMsg.includes('QUOTA') || eMsg.includes('Too Many Requests')) {
+        return NextResponse.json({
+          response: '⏳ **Rate limit reached** — Free Gemini quota hit for this minute.\n\nWait 60 seconds and try again. The free tier allows **15 requests/minute**.',
         });
-        const chat = model.startChat({
-          history,
-          generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
-        });
-        const result = await chat.sendMessage(lastMessage);
-        const text = result.response.text();
-        return NextResponse.json({ response: text, model: modelName });
-      } catch (e: any) {
-        lastError = e;
-        const eMsg = e?.message ?? '';
-        // 429 rate limit — return friendly message immediately, no point retrying other models
-        if (eMsg.includes('429') || eMsg.includes('quota') || eMsg.includes('QUOTA') || eMsg.includes('Too Many Requests')) {
-          return NextResponse.json({
-            response: '⏳ **Rate limit reached** — Free Gemini quota hit for this minute.\n\nWait 60 seconds and try again. The free tier allows **15 requests/minute**.',
-          });
-        }
-        // 404/model-not-found — try next model in list
-        if (eMsg.includes('404') || eMsg.includes('not found') || e?.status === 404) {
-          continue;
-        }
-        // Any other error — throw immediately to outer catch
-        throw e;
       }
+      throw e;
     }
 
-    // All models failed — return demo with the actual error
-    throw lastError ?? new Error('All Gemini models failed');
 
   } catch (err: any) {
     console.error('Copilot API error:', err);
