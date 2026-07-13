@@ -39,8 +39,9 @@ ${ragContext.map(d => `### ${d.title}\n${d.content.slice(0, 500)}`).join('\n\n--
 
 Always be specific, data-driven, and professional. Use Indian number formatting (lakhs, crores). Reference specific mine names, equipment IDs, and employee details when relevant.`;
 
-// Single stable model — gemini-1.5-flash has the best free tier (15 RPM, 1500 RPD)
-const MODEL = 'gemini-1.5-flash';
+// gemini-2.0-flash is available on v1beta (used by @google/generative-ai SDK)
+// gemini-1.5-flash is NOT available on v1beta — don't use it
+const MODEL = 'gemini-2.0-flash';
 
 // Simple in-memory cache to avoid re-calling API for same/similar queries (5 min TTL)
 const responseCache = new Map<string, { response: string; ts: number }>();
