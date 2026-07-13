@@ -466,7 +466,7 @@ function SafetyOfficerView({ employees, employeeSummary }: { employees: any[]; e
                 style={{ background:'rgba(239,68,68,0.06)', border:'1px solid rgba(239,68,68,0.15)', animationDelay:`${i*0.08}s` }}>
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
                   style={{ background:'linear-gradient(135deg,#7c2d12,#b45309)', color:'#fff' }}>
-                  {e.name.split(' ').map(n=>n[0]).join('').slice(0,2)}
+                  {e.name.split(' ').map((n: string)=>n[0]).join('').slice(0,2)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[12.5px] font-semibold truncate" style={{ color:'var(--text-primary)' }}>{e.name}</p>
@@ -495,7 +495,7 @@ function SafetyOfficerView({ employees, employeeSummary }: { employees: any[]; e
               <div className="flex items-center gap-3">
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-bold flex-shrink-0"
                   style={{ background:'linear-gradient(135deg,#7c2d12,#b45309)', color:'#fff' }}>
-                  {e.name.split(' ').map(n=>n[0]).join('').slice(0,2)}
+                  {e.name.split(' ').map((n: string)=>n[0]).join('').slice(0,2)}
                 </div>
                 <div>
                   <p className="text-[12px] font-semibold" style={{ color:'var(--text-primary)' }}>{e.name}</p>
@@ -704,7 +704,7 @@ function HRView({ employees, employeeSummary }: { employees: any[]; employeeSumm
                   style={{ background:'rgba(245,158,11,0.06)', border:'1px solid rgba(245,158,11,0.18)', animationDelay:`${i*0.07}s` }}>
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
                     style={{ background:'linear-gradient(135deg,#581c87,#7c3aed)', color:'#fff' }}>
-                    {e.name.split(' ').map(n=>n[0]).join('').slice(0,2)}
+                    {e.name.split(' ').map((n: string)=>n[0]).join('').slice(0,2)}
                   </div>
                   <div className="flex-1">
                     <p className="text-[12px] font-semibold" style={{ color:'var(--text-primary)' }}>{e.name}</p>
@@ -727,7 +727,7 @@ function HRView({ employees, employeeSummary }: { employees: any[]; employeeSumm
                 style={{ background:'rgba(255,255,255,0.02)', border:'1px solid var(--border)', animationDelay:`${i*0.07}s` }}>
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
                   style={{ background:'linear-gradient(135deg,#1e3a8a,#1e40af)', color:'#fff' }}>
-                  {e.name.split(' ').map(n=>n[0]).join('').slice(0,2)}
+                  {e.name.split(' ').map((n: string)=>n[0]).join('').slice(0,2)}
                 </div>
                 <div className="flex-1">
                   <p className="text-[12px] font-semibold" style={{ color:'var(--text-primary)' }}>{e.name}</p>
@@ -783,7 +783,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const t = setInterval(() => {
-      setLiveProduction(p => p + Math.floor(Math.random() * 8 + 2));
+      setLiveProduction((p: number) => p + Math.floor(Math.random() * 8 + 2));
     }, 4000);
     return () => clearInterval(t);
   }, []);
