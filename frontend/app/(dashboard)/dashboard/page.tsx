@@ -15,10 +15,8 @@ import Link from 'next/link';
 import KPICard from '@/components/ui/KPICard';
 import Badge from '@/components/ui/Badge';
 import { useAuth } from '@/lib/auth/context';
-import { mines, totalProductionToday, totalTargetToday, monthlyTrend } from '@/lib/mock/production';
-import { equipment, equipmentSummary } from '@/lib/mock/equipment';
-import { employees, employeeSummary } from '@/lib/mock/employees';
-import { notifications } from '@/lib/mock/notifications';
+import { monthlyTrend } from '@/lib/mock/production';
+import { useMines, useEquipment, useEmployees, useEmployeeSummary, useNotifications } from '@/lib/api/hooks';
 
 // ── Tooltip ─────────────────────────────────────────────────────────────────
 const TT = ({ active, payload, label }: any) => {
@@ -102,11 +100,7 @@ const safetyTrend = [
   { month: 'Jul', incidents: 5,  violations: 7  },
 ];
 
-const equipmentHealthData = equipment.slice(0, 6).map(e => ({
-  name: e.name.replace(/^(Dumper|Shovel|Drill|Conveyor|Pump|Excavator)\s/i, '').slice(0, 8),
-  health: e.healthScore,
-  fill: e.healthScore >= 80 ? '#10b981' : e.healthScore >= 60 ? '#f59e0b' : '#ef4444',
-}));
+
 
 // ── Attendance trend for HR ──────────────────────────────────────────────────
 const attendanceTrend = [
@@ -152,7 +146,7 @@ function SectionAIRecs({ role }: { role: string }) {
   );
 }
 
-function SectionAlerts() {
+function SectionAlerts({ notifications }: { notifications: any[] }) {
   const criticalAlerts = notifications.filter(n => n.priority === 'critical' || n.priority === 'high').slice(0, 4);
   return (
     <div className="glass-card p-5 slide-in-up">
@@ -180,8 +174,8 @@ function SectionAlerts() {
   );
 }
 
-function SectionMaintenance() {
-  const upcoming = equipment
+function SectionMaintenance({ equipment }: { equipment: any[] }) {
+  const upcoming = [...equipment]
     .sort((a, b) => new Date(a.nextMaintenance).getTime() - new Date(b.nextMaintenance).getTime())
     .slice(0, 5);
   return (
@@ -224,13 +218,16 @@ function SectionMaintenance() {
 //  ROLE VIEWS
 // ══════════════════════════════════════════════════════════════════════════════
 
-function AdminView({ liveProduction }: { liveProduction: number }) {
+function AdminView({ liveProduction, mines, equipment, equipmentSummary, employees, employeeSummary, notifications, totalTargetToday }: {
+  liveProduction: number; mines: any[]; equipment: any[]; equipmentSummary: any;
+  employees: any[]; employeeSummary: any; notifications: any[]; totalTargetToday: number;
+}) {
   const efficiency = Math.round((liveProduction / totalTargetToday) * 100);
   const pieData = [
-    { name: 'Operational', value: equipmentSummary.operational },
-    { name: 'Maintenance', value: equipmentSummary.maintenance },
-    { name: 'Breakdown',   value: equipmentSummary.breakdown },
-    { name: 'Idle',        value: equipmentSummary.idle },
+    { name: 'Operational', value: equipmentSummary?.operational ?? 0 },
+    { name: 'Maintenance', value: equipmentSummary?.maintenance ?? 0 },
+    { name: 'Breakdown',   value: equipmentSummary?.breakdown ?? 0 },
+    { name: 'Idle',        value: equipmentSummary?.idle ?? 0 },
   ];
   return (
     <div className="space-y-5">
@@ -336,8 +333,8 @@ function AdminView({ liveProduction }: { liveProduction: number }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <SectionAIRecs role="admin"/>
         <div className="space-y-4">
-          <SectionAlerts/>
-          <SectionMaintenance/>
+          <SectionAlerts notifications={notifications}/>
+          <SectionMaintenance equipment={equipment}/>
         </div>
       </div>
     </div>
@@ -345,7 +342,10 @@ function AdminView({ liveProduction }: { liveProduction: number }) {
 }
 
 // ─── Mine Manager ────────────────────────────────────────────────────────────
-function MineManagerView({ liveProduction }: { liveProduction: number }) {
+function MineManagerView({ liveProduction, mines, equipment, equipmentSummary, employees, employeeSummary, notifications, totalTargetToday }: {
+  liveProduction: number; mines: any[]; equipment: any[]; equipmentSummary: any;
+  employees: any[]; employeeSummary: any; notifications: any[]; totalTargetToday: number;
+}) {
   const efficiency = Math.round((liveProduction / totalTargetToday) * 100);
   return (
     <div className="space-y-5">
@@ -412,17 +412,17 @@ function MineManagerView({ liveProduction }: { liveProduction: number }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <SectionAIRecs role="mine_manager"/>
-        <div className="space-y-4"><SectionAlerts/><SectionMaintenance/></div>
+        <div className="space-y-4"><SectionAlerts notifications={notifications}/><SectionMaintenance equipment={equipment}/></div>
       </div>
     </div>
   );
 }
 
 // ─── Safety Officer ──────────────────────────────────────────────────────────
-function SafetyOfficerView() {
+function SafetyOfficerView({ employees, employeeSummary }: { employees: any[]; employeeSummary: any }) {
   const overdueTraining = employees.filter(e => e.trainingStatus !== 'current');
   const highRisk        = employees.filter(e => e.safetyViolations > 0);
-  const expiredCerts    = employees.flatMap(e => e.certifications.filter(c => c.status === 'expired'));
+  const expiredCerts    = employees.flatMap(e => e.certifications?.filter((c: any) => c.status === 'expired') ?? []);
 
   return (
     <div className="space-y-5">
@@ -516,9 +516,14 @@ function SafetyOfficerView() {
 }
 
 // ─── Maintenance Engineer ────────────────────────────────────────────────────
-function MaintenanceView() {
+function MaintenanceView({ equipment, equipmentSummary, notifications }: { equipment: any[]; equipmentSummary: any; notifications: any[] }) {
   const critical = equipment.filter(e => e.status === 'breakdown' || e.healthScore < 60);
-  const upcoming = equipment.sort((a,b) => new Date(a.nextMaintenance).getTime()-new Date(b.nextMaintenance).getTime()).slice(0,6);
+  const upcoming = [...equipment].sort((a,b) => new Date(a.nextMaintenance).getTime()-new Date(b.nextMaintenance).getTime()).slice(0,6);
+  const equipmentHealthData = equipment.slice(0, 6).map(e => ({
+    name: e.name.replace(/^(Dumper|Shovel|Drill|Conveyor|Pump|Excavator)\s/i, '').slice(0, 8),
+    health: e.healthScore,
+    fill: e.healthScore >= 80 ? '#10b981' : e.healthScore >= 60 ? '#f59e0b' : '#ef4444',
+  }));
 
   return (
     <div className="space-y-5">
@@ -621,7 +626,7 @@ function MaintenanceView() {
 }
 
 // ─── HR Officer ──────────────────────────────────────────────────────────────
-function HRView() {
+function HRView({ employees, employeeSummary }: { employees: any[]; employeeSummary: any }) {
   const training_issues = employees.filter(e => e.trainingStatus !== 'current');
   const low_performers  = employees.filter(e => e.performanceRating < 4.0);
   const low_attendance  = employees.filter(e => e.attendancePercent < 90);
@@ -754,7 +759,27 @@ export default function DashboardPage() {
   const role = user?.role ?? 'admin';
   const meta = ROLE_META[role] ?? ROLE_META.admin;
 
+  // Live data from Render API (falls back to mock if backend sleeping)
+  const { data: minesData } = useMines();
+  const { data: equipData } = useEquipment();
+  const { data: empData } = useEmployees();
+  const { data: empSummaryData } = useEmployeeSummary();
+  const { data: notifData } = useNotifications();
+
+  const mines = minesData.mines;
+  const totalProductionToday = minesData.summary.totalProductionToday;
+  const totalTargetToday = minesData.summary.totalTargetToday;
+  const equipment = equipData.equipment;
+  const equipmentSummary = equipData.summary;
+  const employees = empData.employees;
+  const employeeSummary = empSummaryData;
+  const notifications = notifData.notifications;
+
   const [liveProduction, setLiveProduction] = useState(totalProductionToday);
+
+  useEffect(() => {
+    setLiveProduction(totalProductionToday);
+  }, [totalProductionToday]);
 
   useEffect(() => {
     const t = setInterval(() => {
@@ -794,12 +819,12 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Role-specific view */}
-      {role === 'admin'                && <AdminView liveProduction={liveProduction}/>}
-      {role === 'mine_manager'         && <MineManagerView liveProduction={liveProduction}/>}
-      {role === 'safety_officer'       && <SafetyOfficerView/>}
-      {role === 'maintenance_engineer' && <MaintenanceView/>}
-      {role === 'hr'                   && <HRView/>}
+      {/* Role-specific view — pass live data as props */}
+      {role === 'admin'                && <AdminView liveProduction={liveProduction} mines={mines} equipment={equipment} equipmentSummary={equipmentSummary} employees={employees} employeeSummary={employeeSummary} notifications={notifications} totalTargetToday={totalTargetToday}/>}
+      {role === 'mine_manager'         && <MineManagerView liveProduction={liveProduction} mines={mines} equipment={equipment} equipmentSummary={equipmentSummary} employees={employees} employeeSummary={employeeSummary} notifications={notifications} totalTargetToday={totalTargetToday}/>}
+      {role === 'safety_officer'       && <SafetyOfficerView employees={employees} employeeSummary={employeeSummary}/>}
+      {role === 'maintenance_engineer' && <MaintenanceView equipment={equipment} equipmentSummary={equipmentSummary} notifications={notifications}/>}
+      {role === 'hr'                   && <HRView employees={employees} employeeSummary={employeeSummary}/>}
     </div>
   );
 }
